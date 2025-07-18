@@ -230,60 +230,16 @@ class IndeedSearcher(JobSiteSearcher):
         return "Description not available"
 
 class RemoteOKSearcher(JobSiteSearcher):
-    """RemoteOK job board searcher - more permissive."""
+    """RemoteOK job board searcher using official API."""
     
     def search(self, query: str, location: str) -> List[JobPosting]:
-        """Search RemoteOK for jobs."""
-        jobs = []
-        base_url = "https://remoteok.io/api"
+        """Search RemoteOK using official API."""
+        # Import the RemoteOK API searcher
+        from job_sites.remoteok import RemoteOKSearcher as RemoteOKAPISearcher
         
-        try:
-            response = self._make_request(base_url)
-            if not response:
-                return jobs
-            
-            # RemoteOK sometimes returns HTML instead of JSON
-            if response.headers.get('content-type', '').startswith('text/html'):
-                print("RemoteOK returned HTML instead of JSON")
-                return jobs
-            
-            jobs_data = response.json()
-            
-            # Filter jobs based on query
-            query_lower = query.lower()
-            for job_data in jobs_data[1:21]:  # Skip first item (metadata), limit to 20
-                try:
-                    if not isinstance(job_data, dict):
-                        continue
-                    
-                    title = job_data.get('position', '')
-                    company = job_data.get('company', '')
-                    description = job_data.get('description', '')
-                    
-                    # Simple keyword matching
-                    if (query_lower in title.lower() or 
-                        query_lower in description.lower() or
-                        any(term in title.lower() for term in query_lower.split())):
-                        
-                        job = JobPosting(
-                            title=title,
-                            company=company,
-                            location="Remote",
-                            salary=job_data.get('salary_range', 'Not specified'),
-                            description=description[:500],
-                            url=f"https://remoteok.io/remote-jobs/{job_data.get('id', '')}",
-                            date_posted=datetime.now().strftime('%Y-%m-%d'),
-                            job_site='RemoteOK'
-                        )
-                        
-                        job.relevance_score = self.calculate_relevance_score(job)
-                        jobs.append(job)
-                        
-                except Exception as e:
-                    continue
-                    
-        except Exception as e:
-            print(f"Error searching RemoteOK: {e}")
+        # Create API searcher and get jobs
+        api_searcher = RemoteOKAPISearcher(self.config)
+        jobs = api_searcher.search_jobs(query)
         
         return jobs
 
@@ -811,6 +767,9 @@ class JobSearcher:
         
         if real_sites.get('weworkremotely', False):  # ✅ REAL DATA
             searchers['weworkremotely'] = WeWorkRemotelySearcher(self.config)
+        
+        if real_sites.get('remoteok', False):  # ✅ REAL DATA - Official API
+            searchers['remoteok'] = RemoteOKSearcher(self.config)
         
         if real_sites.get('glassdoor', False):
             # searchers['glassdoor'] = GlassdoorSearcher(self.config)  # Not implemented yet

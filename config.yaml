@@ -17,8 +17,8 @@ locations:
 # Real Job Sites (actual job boards with real data)
 real_job_sites:
   weworkremotely: true   # ✅ REAL DATA - Extracted from WeWorkRemotely
+  remoteok: true         # ✅ REAL DATA - Official RemoteOK API
   indeed: false          # ❌ Blocks automated requests (403 errors)
-  remoteok: false        # ❌ API returns HTML instead of JSON
   angelco: false         # ❌ Keep disabled for now
   hackernews: false      # ❌ No current matches
   usajobs: false         # ❌ API might be down
