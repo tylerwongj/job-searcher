@@ -1,0 +1,138 @@
+# Job Search Configuration
+# Edit this file to customize your job search criteria
+
+# Basic Search Parameters - Unity & Web Development
+search_terms:
+  - "unity developer"
+  - "game developer"
+  - "c# developer"
+  - "web developer"
+  - "frontend developer"
+  - "full stack developer"
+
+# Location settings - just one location
+locations:
+  - "Remote"
+
+# Real Job Sites (actual job boards with real data)
+real_job_sites:
+  weworkremotely: true   # ✅ REAL DATA - Extracted from WeWorkRemotely
+  indeed: false          # ❌ Blocks automated requests (403 errors)
+  remoteok: false        # ❌ API returns HTML instead of JSON
+  angelco: false         # ❌ Keep disabled for now
+  hackernews: false      # ❌ No current matches
+  usajobs: false         # ❌ API might be down
+  glassdoor: false       # ❌ Requires login
+  linkedin: false        # ❌ Requires login
+  stackoverflow: false   # ❌ Jobs section deprecated
+  github_jobs: false     # ❌ Service discontinued
+
+# Mock/Testing Job Sites (fake data for development/testing)
+mock_job_sites:
+  flexjobs: false        # 🔧 Mock flexible job data
+  gamedev: false         # 🔧 Mock Unity/game development jobs
+  mock: false            # 🔧 Basic mock data
+
+# Filters
+filters:
+  # Salary range (optional, leave empty to ignore)
+  min_salary: 80000
+  max_salary: 200000
+  
+  # Experience level
+  experience_levels:
+    - "Entry Level"
+    - "Mid Level"
+    - "Senior Level"
+  
+  # Employment type
+  employment_types:
+    - "Full-time"
+    - "Contract"
+    - "Part-time"
+  
+  # Keywords to look for in job descriptions (boost relevance)
+  preferred_keywords:
+    - "unity"
+    - "c#"
+    - "game development"
+    - "3d"
+    - "javascript"
+    - "react"
+    - "typescript"
+    - "node.js"
+    - "html"
+    - "css"
+    - "frontend"
+    - "ui/ux"
+    - "git"
+  
+  # Keywords to avoid (filter out jobs containing these)
+  excluded_keywords:
+    - "unpaid"
+    - "intern"
+    - "no experience"
+    - "cold calling"
+    - "door to door"
+  
+  # Company size preference
+  company_sizes:
+    - "Startup"
+    - "Small"
+    - "Medium"
+    - "Large"
+  
+  # Maximum age of job postings (in days)
+  max_age_days: 7
+
+# Personal criteria description
+# Write a detailed description of what you're looking for
+personal_description: |
+  I'm looking for a software engineering role where I can work with modern technologies
+  and contribute to meaningful projects. I prefer companies with good work-life balance,
+  opportunities for growth, and collaborative team environments. I'm particularly 
+  interested in roles that involve API development, cloud technologies, and working
+  with data. Remote work or hybrid options are preferred.
+
+# Output settings
+output:
+  # Maximum number of results to return
+  max_results: 50
+  
+  # Sort results by (relevance, date, salary)
+  sort_by: "relevance"
+  
+  # Export formats
+  export_formats:
+    - "csv"
+    - "json"
+    - "html"
+  
+  # Save results to file
+  save_results: true
+  
+  # Results directory
+  results_dir: "results"
+
+# Notification settings
+notifications:
+  # Enable email notifications for new jobs
+  email_enabled: false
+  email_address: "your-email@example.com"
+  
+  # Enable desktop notifications
+  desktop_notifications: true
+  
+  # Minimum relevance score to trigger notification (0-100)
+  min_relevance_score: 0
+
+# Search scheduling
+scheduling:
+  # Enable automatic searches
+  enabled: false
+  
+  # Search frequency (hourly, daily, weekly)
+  frequency: "daily"
+  
+  # Time to run searches (24-hour format)
+  run_time: "09:00"
