@@ -716,6 +716,48 @@ class MockJobSearcher(JobSiteSearcher):
         
         return jobs
 
+class AuthenticJobsSearcher(JobSiteSearcher):
+    """Authentic Jobs searcher using official API."""
+    
+    def search(self, query: str, location: str) -> List[JobPosting]:
+        """Search Authentic Jobs using API."""
+        # Import the Authentic Jobs API searcher
+        from job_sites.authentic_jobs import AuthenticJobsSearcher as AuthenticJobsAPISearcher
+        
+        # Create API searcher and get jobs
+        api_searcher = AuthenticJobsAPISearcher(self.config)
+        jobs = api_searcher.search_jobs(query)
+        
+        return jobs
+
+class DiceSearcher(JobSiteSearcher):
+    """Dice.com searcher using web scraping."""
+    
+    def search(self, query: str, location: str) -> List[JobPosting]:
+        """Search Dice.com using web scraping."""
+        # Import the Dice scraper
+        from job_sites.dice import DiceSearcher as DiceWebSearcher
+        
+        # Create scraper and get jobs
+        dice_searcher = DiceWebSearcher(self.config)
+        jobs = dice_searcher.search_jobs(query, location)
+        
+        return jobs
+
+class HitmarkerSearcher(JobSiteSearcher):
+    """Hitmarker.net searcher for gaming jobs."""
+    
+    def search(self, query: str, location: str) -> List[JobPosting]:
+        """Search Hitmarker.net for gaming jobs."""
+        # Import the Hitmarker scraper
+        from job_sites.hitmarker import HitmarkerSearcher as HitmarkerWebSearcher
+        
+        # Create scraper and get jobs
+        hitmarker_searcher = HitmarkerWebSearcher(self.config)
+        jobs = hitmarker_searcher.search_jobs(query)
+        
+        return jobs
+
 class JobSearcher:
     """Main job searcher class."""
     
@@ -770,6 +812,15 @@ class JobSearcher:
         
         if real_sites.get('remoteok', False):  # ✅ REAL DATA - Official API
             searchers['remoteok'] = RemoteOKSearcher(self.config)
+        
+        if real_sites.get('authentic_jobs', False):  # ✅ REAL DATA - Creative/tech API
+            searchers['authentic_jobs'] = AuthenticJobsSearcher(self.config)
+        
+        if real_sites.get('dice', False):  # ✅ REAL DATA - Tech job board
+            searchers['dice'] = DiceSearcher(self.config)
+        
+        if real_sites.get('hitmarker', False):  # ✅ REAL DATA - Gaming/esports
+            searchers['hitmarker'] = HitmarkerSearcher(self.config)
         
         if real_sites.get('glassdoor', False):
             # searchers['glassdoor'] = GlassdoorSearcher(self.config)  # Not implemented yet

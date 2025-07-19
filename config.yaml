@@ -5,10 +5,10 @@
 search_terms:
   - "unity developer"
   - "game developer"
-  - "c# developer"
+  # - "c# developer"
   - "web developer"
-  - "frontend developer"
-  - "full stack developer"
+  # - "frontend developer"
+  # - "full stack developer"
 
 # Location settings - just one location
 locations:
@@ -18,6 +18,9 @@ locations:
 real_job_sites:
   weworkremotely: true   # ✅ REAL DATA - Extracted from WeWorkRemotely
   remoteok: true         # ✅ REAL DATA - Official RemoteOK API
+  authentic_jobs: true   # ✅ REAL DATA - Creative/tech jobs with API
+  dice: true             # ✅ REAL DATA - Tech-focused job board
+  hitmarker: true        # ✅ REAL DATA - Gaming/esports jobs
   indeed: false          # ❌ Blocks automated requests (403 errors)
   angelco: false         # ❌ Keep disabled for now
   hackernews: false      # ❌ No current matches
@@ -41,7 +44,7 @@ filters:
   
   # Experience level
   experience_levels:
-    - "Entry Level"
+    # - "Entry Level"
     - "Mid Level"
     - "Senior Level"
   
