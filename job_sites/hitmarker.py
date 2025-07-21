@@ -9,7 +9,8 @@ import time
 from typing import List, Dict, Any
 from rich.console import Console
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urljoin
+import re
 
 # Simple JobPosting class for Hitmarker data
 class JobPosting:
@@ -43,6 +44,10 @@ def get_hitmarker_jobs(search_terms: List[str] = None, max_jobs: int = 20) -> Li
     """
     Fetch real job data from Hitmarker.net using web scraping.
     
+    NOTE: As of July 2024, Hitmarker.net appears to have anti-scraping measures
+    that return corrupted/encoded content. This function now falls back to
+    alternative gaming job sites that are more scrapeable.
+    
     Args:
         search_terms: List of terms to search for
         max_jobs: Maximum number of jobs to return
@@ -75,11 +80,18 @@ def get_hitmarker_jobs(search_terms: List[str] = None, max_jobs: int = 20) -> Li
             'Sec-Fetch-Site': 'none',
         }
         
-        console.print(f"[blue]🎮 Fetching jobs from Hitmarker.net...[/blue]")
+        console.print(f"[blue]🎮 Attempting to fetch jobs from Hitmarker.net...[/blue]")
         
         # Make request with respectful delay
         response = requests.get(search_url, headers=headers, timeout=15)
         response.raise_for_status()
+        
+        # Check if content looks corrupted/encoded (anti-scraping measure)
+        content_preview = response.text[:200]
+        if len(content_preview.strip()) < 50 or '\ufffd' in content_preview or not content_preview.isprintable():
+            console.print(f"[yellow]⚠️  Hitmarker.net appears to have anti-scraping measures active[/yellow]")
+            console.print(f"[cyan]🔄 Falling back to alternative gaming job sites...[/cyan]")
+            return get_alternative_gaming_jobs(search_terms, max_jobs)
         
         # Parse HTML content
         from bs4 import BeautifulSoup
@@ -109,6 +121,10 @@ def get_hitmarker_jobs(search_terms: List[str] = None, max_jobs: int = 20) -> Li
             job_elements = [elem for elem in job_elements if '/jobs/' in elem.get('href', '')]
             console.print(f"[yellow]⚠️  Using fallback method, found {len(job_elements)} job links[/yellow]")
         
+        if not job_elements:
+            console.print(f"[yellow]⚠️  No jobs found on Hitmarker.net, using alternative sites...[/yellow]")
+            return get_alternative_gaming_jobs(search_terms, max_jobs)
+        
         job_postings = []
         
         for job_elem in job_elements[:max_jobs]:
@@ -130,10 +146,12 @@ def get_hitmarker_jobs(search_terms: List[str] = None, max_jobs: int = 20) -> Li
         
     except requests.RequestException as e:
         console.print(f"[red]❌ Error fetching Hitmarker jobs: {e}[/red]")
-        return []
+        console.print(f"[cyan]🔄 Trying alternative gaming job sites...[/cyan]")
+        return get_alternative_gaming_jobs(search_terms, max_jobs)
     except Exception as e:
         console.print(f"[red]❌ Unexpected error: {e}[/red]")
-        return []
+        console.print(f"[cyan]🔄 Trying alternative gaming job sites...[/cyan]")
+        return get_alternative_gaming_jobs(search_terms, max_jobs)
 
 def parse_hitmarker_job_element(job_elem, search_terms: List[str]) -> JobPosting:
     """Parse a single job element from Hitmarker."""
@@ -291,6 +309,108 @@ def calculate_hitmarker_relevance_score(title: str, description: str, company: s
             score -= 10
     
     return max(min(score, 100.0), 0.0)  # Cap between 0-100
+
+def get_alternative_gaming_jobs(search_terms: List[str] = None, max_jobs: int = 20) -> List[JobPosting]:
+    """
+    Fallback function to fetch jobs from alternative gaming job sites
+    when Hitmarker.net is not accessible due to anti-scraping measures.
+    """
+    console = Console()
+    console.print(f"[blue]🎮 Fetching jobs from RemoteGameJobs.com (alternative)...[/blue]")
+    
+    try:
+        base_url = "https://remotegamejobs.com"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
+        
+        response = requests.get(base_url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Try selectors for RemoteGameJobs
+        job_elements = soup.select('.job-box')
+        
+        if not job_elements:
+            job_elements = soup.select('a[href*="/jobs/"]')
+        
+        console.print(f"[green]✅ Found {len(job_elements)} jobs from alternative site[/green]")
+        
+        job_postings = []
+        
+        for job_elem in job_elements[:max_jobs]:
+            try:
+                job_posting = parse_alternative_job_element(job_elem, search_terms, base_url)
+                if job_posting:
+                    job_postings.append(job_posting)
+            except Exception as e:
+                continue
+        
+        # Sort by relevance score
+        job_postings.sort(key=lambda x: x.relevance_score, reverse=True)
+        
+        console.print(f"[cyan]📊 Processed {len(job_postings)} jobs from alternative gaming sites[/cyan]")
+        return job_postings
+        
+    except Exception as e:
+        console.print(f"[red]❌ Error fetching from alternative sites: {e}[/red]")
+        return []
+
+def parse_alternative_job_element(job_elem, search_terms: List[str], base_url: str) -> JobPosting:
+    """Parse a job element from RemoteGameJobs.com"""
+    try:
+        # Extract title
+        title_elem = job_elem.find(['h2', 'h3', 'h4', '.job-title']) or job_elem
+        title = title_elem.get_text(strip=True) if title_elem else 'Unknown Position'
+        
+        # Extract company
+        company = 'Unknown Company'
+        company_elem = job_elem.find(class_=re.compile(r'company', re.I))
+        if company_elem:
+            company = company_elem.get_text(strip=True)
+        
+        # Location is likely "Remote" for this site
+        location = 'Remote'
+        
+        # Extract URL
+        job_url = base_url
+        if job_elem.name == 'a' and job_elem.get('href'):
+            job_url = urljoin(base_url, job_elem['href'])
+        else:
+            link_elem = job_elem.find('a', href=True)
+            if link_elem:
+                job_url = urljoin(base_url, link_elem['href'])
+        
+        # Extract description
+        desc_text = job_elem.get_text(strip=True)
+        description = desc_text[:200] + "..." if len(desc_text) > 200 else desc_text
+        
+        # Calculate relevance (higher for remote gaming jobs)
+        relevance_score = calculate_hitmarker_relevance_score(title, description, company, search_terms)
+        relevance_score += 10  # Bonus for being on a remote gaming site
+        
+        if relevance_score < 5:
+            return None
+        
+        return JobPosting(
+            title=title,
+            company=company,
+            location=location,
+            salary='Salary not specified',
+            description=description,
+            url=job_url,
+            date_posted=datetime.now().strftime('%Y-%m-%d'),
+            job_site="RemoteGameJobs (Alternative)",
+            relevance_score=min(relevance_score, 100.0)
+        )
+        
+    except Exception as e:
+        return None
 
 class HitmarkerSearcher:
     """Job searcher for Hitmarker.net using web scraping."""
